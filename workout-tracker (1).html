@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Move — Daily Workout Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f5f2;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: #e2ddd7;
+    --border2: #ccc8c1;
+    --text: #1a1816;
+    --text2: #6b6560;
+    --text3: #a09b95;
+    --accent: #1a1816;
+    --success: #2d6a4f;
+    --success-bg: #e8f5ee;
+    --danger: #c0392b;
+    --danger-bg: #fdf0ee;
+    --timer-active: #1a1816;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
+
+  /* ── Layout ── */
+  .app { display: none; max-width: 520px; margin: 0 auto; padding: 0 16px 80px; }
+  .app.visible { display: block; }
+
+  /* ── Auth Screen ── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+  }
+  #auth-screen h1 { font-size: 48px; margin-bottom: 8px; }
+  #auth-screen p { color: var(--text2); margin-bottom: 2.5rem; font-size: 16px; }
+  .google-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 28px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    color: var(--text); cursor: pointer; transition: all 0.15s;
+  }
+  .google-btn:hover { background: var(--surface2); border-color: var(--border2); }
+  .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  /* ── Top Nav ── */
+  .top-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .nav-brand { font-family: 'DM Serif Display', serif; font-size: 24px; }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .sign-out-btn {
+    font-size: 12px; color: var(--text3); background: none; border: none;
+    cursor: pointer; padding: 4px 0;
+  }
+  .sign-out-btn:hover { color: var(--text); }
+
+  /* ── Bottom Tab Bar ── */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: none; justify-content: space-around; align-items: center;
+    padding: 10px 0 18px; z-index: 100;
+  }
+  .tab-bar.visible { display: flex; }
+  .tab-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: none; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 10px;
+    color: var(--text3); padding: 4px 20px; transition: color 0.12s;
+  }
+  .tab-btn.active { color: var(--text); }
+  .tab-btn svg { width: 22px; height: 22px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px; margin-bottom: 12px;
+  }
+  .card-sm { padding: 14px 16px; }
+
+  /* ── Streak Banner ── */
+  .streak-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--text); color: #fff;
+    border-radius: var(--radius); padding: 18px 22px; margin-bottom: 20px;
+  }
+  .streak-num { font-family: 'DM Serif Display', serif; font-size: 42px; line-height: 1; }
+  .streak-label { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+  .streak-right { text-align: right; }
+  .streak-sub { font-size: 13px; opacity: 0.8; }
+
+  /* ── Week dots ── */
+  .week-strip { display: flex; gap: 6px; margin-bottom: 24px; }
+  .week-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .week-day-label { font-size: 10px; color: var(--text3); }
+  .week-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid var(--border); display: flex; align-items: center;
+    justify-content: center; font-size: 11px; color: var(--text3);
+    font-weight: 500;
+  }
+  .week-dot.done { background: var(--text); color: #fff; border-color: var(--text); }
+  .week-dot.today { border: 2px solid var(--text); color: var(--text); font-weight: 500; }
+  .week-dot.today.done { background: var(--text); color: #fff; }
+
+  /* ── Section headers ── */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; }
+  .text-btn { background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text2); cursor: pointer; padding: 0; }
+  .text-btn:hover { color: var(--text); }
+
+  /* ── Program cards ── */
+  .program-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px;
+    cursor: pointer; transition: all 0.12s;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .program-card:hover { border-color: var(--border2); background: var(--surface2); }
+  .program-card-name { font-weight: 500; font-size: 15px; }
+  .program-card-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .program-card-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    background: none; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.12s; color: var(--text2);
+  }
+  .icon-btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface2); }
+  .icon-btn svg { width: 15px; height: 15px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    border-radius: var(--radius-sm); padding: 10px 20px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); cursor: pointer; transition: all 0.12s;
+  }
+  .btn:hover { background: var(--surface2); border-color: var(--border2); }
+  .btn-primary { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn-primary:hover { opacity: 0.85; background: var(--text); }
+  .btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+  .btn-success:hover { opacity: 0.9; }
+  .btn-lg { padding: 14px 28px; font-size: 15px; border-radius: var(--radius); }
+  .btn-full { width: 100%; }
+  .btn-danger { color: var(--danger); border-color: #f0c0bb; }
+  .btn-danger:hover { background: var(--danger-bg); }
+
+  /* ── Program Editor ── */
+  .editor-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-top: 8px; }
+  .back-btn {
+    background: none; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text2); flex-shrink: 0;
+  }
+  .back-btn:hover { background: var(--surface2); }
+  .editor-header h2 { font-size: 22px; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
+    outline: none; transition: border-color 0.12s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--border2); }
+  textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+  label { font-size: 12px; font-weight: 500; color: var(--text2); display: block; margin-bottom: 5px; }
+  .field { margin-bottom: 14px; }
+
+  .circuit-block {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .circuit-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .circuit-title-input {
+    font-family: 'DM Serif Display', serif; font-size: 18px; border: none;
+    background: none; color: var(--text); outline: none; padding: 0; width: auto; flex: 1;
+  }
+  .exercise-row {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px;
+  }
+  .exercise-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .exercise-row-name { font-weight: 500; font-size: 14px; }
+  .exercise-meta-row { display: flex; gap: 8px; }
+  .exercise-meta-row input { flex: 1; font-size: 13px; padding: 7px 10px; }
+  .exercise-meta-row select { flex: 1; font-size: 13px; padding: 7px 10px; }
+
+  .circuit-settings { display: flex; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .circuit-settings .field { flex: 1; margin-bottom: 0; }
+  .circuit-settings label { font-size: 11px; }
+
+  .add-btn {
+    display: flex; align-items: center; gap: 6px; width: 100%;
+    background: none; border: 1px dashed var(--border2); border-radius: var(--radius-sm);
+    padding: 9px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--text3); cursor: pointer; transition: all 0.12s; margin-top: 4px;
+  }
+  .add-btn:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+
+  /* ── Session Screen ── */
+  #session-screen { display: none; }
+  #session-screen.visible { display: block; }
+
+  .session-header { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+  .session-program-name { font-family: 'DM Serif Display', serif; font-size: 22px; }
+  .session-progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 12px; }
+  .session-progress-fill { height: 100%; background: var(--text); border-radius: 2px; transition: width 0.4s ease; }
+
+  .session-body { max-width: 520px; margin: 0 auto; padding: 24px 16px 80px; }
+
+  .phase-label {
+    font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .exercise-name-big { font-family: 'DM Serif Display', serif; font-size: 32px; line-height: 1.2; margin-bottom: 8px; }
+  .exercise-detail { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+
+  /* ── Timer ── */
+  .timer-ring-wrap { display: flex; justify-content: center; margin: 20px 0 28px; }
+  .timer-ring { position: relative; width: 160px; height: 160px; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring-track { fill: none; stroke: var(--border); stroke-width: 5; }
+  .timer-ring-fill { fill: none; stroke: var(--text); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.5s linear; }
+  .timer-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .timer-big { font-family: 'DM Serif Display', serif; font-size: 38px; line-height: 1; }
+  .timer-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .session-actions { display: flex; flex-direction: column; gap: 10px; }
+  .session-actions .btn { font-size: 15px; padding: 14px; }
+
+  .upcoming-list { margin-top: 28px; }
+  .upcoming-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2);
+  }
+  .upcoming-num {
+    width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 10px;
+    color: var(--text3); flex-shrink: 0;
+  }
+
+  .complete-screen { text-align: center; padding: 40px 20px; }
+  .complete-icon { font-size: 48px; margin-bottom: 16px; }
+  .complete-screen h2 { font-size: 32px; margin-bottom: 8px; }
+  .complete-screen p { color: var(--text2); margin-bottom: 28px; }
+
+  /* ── History ── */
+  .history-item {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .history-date { font-size: 12px; color: var(--text3); margin-bottom: 3px; }
+  .history-name { font-size: 14px; font-weight: 500; }
+  .history-duration { font-size: 12px; color: var(--text3); text-align: right; }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--success-bg); color: var(--success);
+  }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Utility */
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mb-8 { margin-bottom: 8px; }
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .text-muted { color: var(--text2); font-size: 13px; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .empty-state h3 { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text2); margin-bottom: 6px; }
+
+  /* notification */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff; border-radius: var(--radius-sm);
+    padding: 10px 20px; font-size: 13px; opacity: 0; transition: all 0.25s;
+    white-space: nowrap; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div id="auth-screen">
+  <h1>Move</h1>
+  <p>Track your workouts, build your streak.</p>
+  <button class="google-btn" onclick="signInWithGoogle()">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+    Continue with Google
+  </button>
+  <p style="margin-top:20px; font-size:12px; color:var(--text3);">You'll need to add your Firebase config below before this works.</p>
+</div>
+
+<!-- Main App -->
+<div class="app" id="main-app">
+  <div class="top-nav">
+    <div class="nav-brand">Move</div>
+    <div class="nav-right">
+      <div class="avatar" id="user-avatar">?</div>
+      <button class="sign-out-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- Home Page -->
+  <div class="page active" id="page-home">
+    <div class="streak-banner" id="streak-banner">
+      <div>
+        <div class="streak-num" id="streak-count">0</div>
+        <div class="streak-label">day streak</div>
+      </div>
+      <div class="streak-right">
+        <div style="font-family:'DM Serif Display',serif; font-size:18px;">Keep it up</div>
+        <div class="streak-sub" id="streak-sub">Complete a workout today</div>
+      </div>
+    </div>
+
+    <div class="week-strip" id="week-strip"></div>
+
+    <div class="section-header">
+      <div class="section-title">Programs</div>
+    </div>
+    <div id="home-program-list">
+      <div class="empty-state"><h3>No programs yet</h3><p>Go to Programs to create one.</p></div>
+    </div>
+
+    <div class="section-header mt-24">
+      <div class="section-title">Recent Sessions</div>
+    </div>
+    <div id="home-history">
+      <div class="empty-state"><h3>No sessions yet</h3><p>Start a workout to begin tracking.</p></div>
+    </div>
+  </div>
+
+  <!-- Programs Page -->
+  <div class="page" id="page-programs">
+    <div class="section-header" style="padding-top:4px;">
+      <div class="section-title">My Programs</div>
+      <button class="text-btn" onclick="showEditor(null)">+ New</button>
+    </div>
+    <div id="programs-list">
+      <div class="empty-state"><h3>No programs yet</h3><p>Create your first program to get started.</p></div>
+    </div>
+  </div>
+
+  <!-- History Page -->
+  <div class="page" id="page-history">
+    <div class="section-header" style="padding-top:4px;">
+      <div class="section-title">Workout History</div>
+    </div>
+    <div id="history-list">
+      <div class="empty-state"><h3>No history yet</h3><p>Your completed sessions will appear here.</p></div>
+    </div>
+  </div>
+
+  <!-- Program Editor Page -->
+  <div class="page" id="page-editor">
+    <div class="editor-header">
+      <button class="back-btn" onclick="showPage('programs')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <h2 id="editor-title">New Program</h2>
+    </div>
+
+    <div class="field">
+      <label>Program name</label>
+      <input type="text" id="prog-name" placeholder="e.g. Morning Strength">
+    </div>
+
+    <div id="circuits-container"></div>
+
+    <button class="add-btn" onclick="addCircuit()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add circuit / block
+    </button>
+
+    <div style="display:flex; gap:10px; margin-top:24px;">
+      <button class="btn btn-primary btn-full btn-lg" onclick="saveProgram()">Save program</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" data-tab="home" onclick="showTab('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Home
+  </button>
+  <button class="tab-btn" data-tab="programs" onclick="showTab('programs')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Programs
+  </button>
+  <button class="tab-btn" data-tab="history" onclick="showTab('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+    History
+  </button>
+</div>
+
+<!-- Session Screen (full screen overlay) -->
+<div id="session-screen">
+  <div class="session-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="session-program-name" id="sess-program-name"></div>
+      <button class="btn btn-danger" style="padding:6px 14px;font-size:12px;" onclick="endSession(true)">End</button>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-top:4px;" id="sess-step-label"></div>
+    <div class="session-progress-bar"><div class="session-progress-fill" id="sess-progress"></div></div>
+  </div>
+  <div class="session-body" id="session-body"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+// ══════════════════════════════════════════════════════════
+//  FIREBASE CONFIG — Replace with your own project values
+// ══════════════════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, addDoc, query, where, orderBy, limit, serverTimestamp, Timestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC7PAIJSUv-wLq1JUu54rpsOrxUIDuVpP0",
+  authDomain: "exstr-3d798.firebaseapp.com",
+  projectId: "exstr-3d798",
+  storageBucket: "exstr-3d798.firebasestorage.app",
+  messagingSenderId: "530327654839",
+  appId: "1:530327654839:web:5c3cfe32badf57727ad832"
+};
+
+const SCHEMA_VERSION = 1;
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let programs = [];
+let editingProgramId = null;
+let sessionState = null;
+let timerInterval = null;
+
+// ── Auth ──────────────────────────────────────────────────
+window.signInWithGoogle = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch(e) { showToast("Sign-in failed: " + e.message); }
+};
+window.signOut = async () => {
+  await fbSignOut(auth);
+};
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main-app').classList.add('visible');
+    document.getElementById('tab-bar').classList.add('visible');
+    // avatar
+    const av = document.getElementById('user-avatar');
+    if (user.photoURL) av.innerHTML = `<img src="${user.photoURL}" alt="">`;
+    else av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+    loadAll();
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('main-app').classList.remove('visible');
+    document.getElementById('tab-bar').classList.remove('visible');
+  }
+});
+
+// ── Data ──────────────────────────────────────────────────
+async function loadAll() {
+  await loadPrograms();
+  renderHome();
+  renderProgramsList();
+  renderHistory();
+}
+
+async function loadPrograms() {
+  if (!currentUser) return;
+  const snap = await getDocs(collection(db, 'users', currentUser.uid, 'programs'));
+  programs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function loadHistory() {
+  if (!currentUser) return [];
+  const q = query(collection(db, 'users', currentUser.uid, 'sessions'), orderBy('completedAt', 'desc'), limit(30));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function computeStreak() {
+  if (!currentUser) return { streak: 0, todayDone: false, weekDays: [] };
+  const q = query(collection(db, 'users', currentUser.uid, 'sessions'), orderBy('completedAt', 'desc'));
+  const snap = await getDocs(q);
+  const sessions = snap.docs.map(d => d.data());
+  const today = dayKey(new Date());
+  const sessionDays = new Set(sessions.map(s => {
+    const d = s.completedAt?.toDate ? s.completedAt.toDate() : new Date(s.completedAt);
+    return dayKey(d);
+  }));
+  const todayDone = sessionDays.has(today);
+  // streak: count consecutive days back from today
+  let streak = 0;
+  let check = new Date();
+  while (true) {
+    if (sessionDays.has(dayKey(check))) { streak++; check.setDate(check.getDate()-1); }
+    else if (dayKey(check) === today && !todayDone) { check.setDate(check.getDate()-1); }
+    else break;
+  }
+  // week (Mon–Sun)
+  const weekDays = [];
+  const now = new Date();
+  const dow = (now.getDay() + 6) % 7; // 0=Mon
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - dow + i);
+    weekDays.push({ date: d, done: sessionDays.has(dayKey(d)), isToday: dayKey(d) === today });
+  }
+  return { streak, todayDone, weekDays };
+}
+
+function dayKey(d) { return d.toISOString().slice(0,10); }
+
+// ── Render Home ───────────────────────────────────────────
+async function renderHome() {
+  const { streak, todayDone, weekDays } = await computeStreak();
+  document.getElementById('streak-count').textContent = streak;
+  document.getElementById('streak-sub').textContent = todayDone ? 'Done for today!' : 'Complete a workout today';
+
+  const strip = document.getElementById('week-strip');
+  const dayNames = ['M','T','W','T','F','S','S'];
+  strip.innerHTML = weekDays.map((d,i) => `
+    <div class="week-day">
+      <div class="week-day-label">${dayNames[i]}</div>
+      <div class="week-dot${d.done?' done':''}${d.isToday?' today':''}">
+        ${d.done ? '✓' : d.isToday ? '·' : ''}
+      </div>
+    </div>
+  `).join('');
+
+  // programs
+  const pl = document.getElementById('home-program-list');
+  if (programs.length === 0) {
+    pl.innerHTML = `<div class="empty-state"><h3>No programs yet</h3><p>Go to Programs to create one.</p></div>`;
+  } else {
+    pl.innerHTML = programs.map(p => `
+      <div class="program-card" onclick="startSession('${p.id}')">
+        <div>
+          <div class="program-card-name">${p.name}</div>
+          <div class="program-card-meta">${p.circuits?.length || 0} circuit${(p.circuits?.length||0)!==1?'s':''} · Tap to start</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:20px;height:20px;color:var(--text3)"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16 10,8" fill="currentColor" stroke="none"/></svg>
+      </div>
+    `).join('');
+  }
+
+  // recent history
+  const history = await loadHistory();
+  const hl = document.getElementById('home-history');
+  if (history.length === 0) {
+    hl.innerHTML = `<div class="empty-state"><h3>No sessions yet</h3><p>Start a workout to begin tracking.</p></div>`;
+  } else {
+    hl.innerHTML = history.slice(0,5).map(h => {
+      const d = h.completedAt?.toDate ? h.completedAt.toDate() : new Date(h.completedAt);
+      return `<div class="history-item">
+        <div>
+          <div class="history-date">${d.toLocaleDateString('en-SG',{weekday:'short',month:'short',day:'numeric'})}</div>
+          <div class="history-name">${h.programName}</div>
+        </div>
+        <div class="history-duration">
+          <span class="badge">Done</span>
+          <div style="margin-top:4px;font-size:11px;color:var(--text3);">${h.duration||''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ── Programs List ─────────────────────────────────────────
+function renderProgramsList() {
+  const el = document.getElementById('programs-list');
+  if (programs.length === 0) {
+    el.innerHTML = `<div class="empty-state"><h3>No programs yet</h3><p>Tap <strong>+ New</strong> to create your first program.</p></div>`;
+    return;
+  }
+  el.innerHTML = programs.map(p => `
+    <div class="program-card" style="cursor:default;">
+      <div style="flex:1;">
+        <div class="program-card-name">${p.name}</div>
+        <div class="program-card-meta">${p.circuits?.length||0} circuit${(p.circuits?.length||0)!==1?'s':''}</div>
+      </div>
+      <div class="program-card-actions">
+        <button class="icon-btn" onclick="startSession('${p.id}')" title="Start">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21 5,3" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button class="icon-btn" onclick="showEditor('${p.id}')" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="icon-btn btn-danger" onclick="deleteProgram('${p.id}')" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── History Page ──────────────────────────────────────────
+async function renderHistory() {
+  const history = await loadHistory();
+  const el = document.getElementById('history-list');
+  if (history.length === 0) {
+    el.innerHTML = `<div class="empty-state"><h3>No history yet</h3><p>Your completed sessions will appear here.</p></div>`;
+    return;
+  }
+  el.innerHTML = history.map(h => {
+    const d = h.completedAt?.toDate ? h.completedAt.toDate() : new Date(h.completedAt);
+    return `<div class="history-item">
+      <div>
+        <div class="history-date">${d.toLocaleDateString('en-SG',{weekday:'long',year:'numeric',month:'short',day:'numeric'})}</div>
+        <div class="history-name">${h.programName}</div>
+      </div>
+      <div class="history-duration">
+        <span class="badge">Completed</span>
+        <div style="margin-top:4px;font-size:11px;color:var(--text3);">${h.duration||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Editor ────────────────────────────────────────────────
+window.showEditor = (programId) => {
+  editingProgramId = programId;
+  const prog = programId ? programs.find(p => p.id === programId) : null;
+  document.getElementById('editor-title').textContent = prog ? 'Edit Program' : 'New Program';
+  document.getElementById('prog-name').value = prog?.name || '';
+  const container = document.getElementById('circuits-container');
+  container.innerHTML = '';
+  if (prog?.circuits?.length) {
+    prog.circuits.forEach(c => addCircuit(c));
+  } else {
+    addCircuit();
+  }
+  showPage('editor');
+};
+
+window.addCircuit = (data) => {
+  const id = 'c' + Date.now() + Math.random().toString(36).slice(2,6);
+  const div = document.createElement('div');
+  div.className = 'circuit-block';
+  div.dataset.cid = id;
+  div.innerHTML = `
+    <div class="circuit-header">
+      <input class="circuit-title-input" type="text" value="${data?.name||'Circuit'}" placeholder="Circuit name">
+      <button class="icon-btn btn-danger" onclick="this.closest('.circuit-block').remove()" style="flex-shrink:0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="exercises-container"></div>
+    <button class="add-btn" onclick="addExercise(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add exercise
+    </button>
+    <div class="circuit-settings">
+      <div class="field">
+        <label>Rounds</label>
+        <input type="number" class="rounds-input" min="1" max="20" value="${data?.rounds||3}">
+      </div>
+      <div class="field">
+        <label>Rest between rounds (sec)</label>
+        <input type="number" class="rest-input" min="0" max="600" value="${data?.restBetweenRounds||30}">
+      </div>
+    </div>
+  `;
+  document.getElementById('circuits-container').appendChild(div);
+  if (data?.exercises?.length) {
+    const addBtn = div.querySelector('.add-btn');
+    data.exercises.forEach(ex => addExercise(addBtn, ex));
+  } else {
+    addExercise(div.querySelector('.add-btn'));
+  }
+};
+
+window.addExercise = (btn, data) => {
+  const container = btn.closest('.circuit-block').querySelector('.exercises-container');
+  const div = document.createElement('div');
+  div.className = 'exercise-row';
+  div.innerHTML = `
+    <div class="exercise-row-header">
+      <input type="text" class="ex-name" placeholder="Exercise name" value="${data?.name||''}" style="border:none;background:none;padding:0;font-weight:500;font-size:14px;outline:none;flex:1;">
+      <button class="icon-btn btn-danger" onclick="this.closest('.exercise-row').remove()" style="width:26px;height:26px;flex-shrink:0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="exercise-meta-row">
+      <select class="ex-type">
+        <option value="reps" ${data?.type==='reps'||!data?.type?'selected':''}>Reps</option>
+        <option value="time" ${data?.type==='time'?'selected':''}>Timed</option>
+      </select>
+      <input type="text" class="ex-reps" placeholder="${data?.type==='time'?'Seconds':'Reps / detail'}" value="${data?.repsOrTime||''}">
+      <input type="text" class="ex-note" placeholder="Note (optional)" value="${data?.note||''}">
+    </div>
+  `;
+  div.querySelector('.ex-type').addEventListener('change', function() {
+    div.querySelector('.ex-reps').placeholder = this.value === 'time' ? 'Seconds' : 'Reps / detail';
+  });
+  container.appendChild(div);
+};
+
+window.saveProgram = async () => {
+  if (!currentUser) return;
+  const name = document.getElementById('prog-name').value.trim();
+  if (!name) { showToast('Please enter a program name'); return; }
+
+  const circuits = [];
+  document.querySelectorAll('.circuit-block').forEach(cb => {
+    const exercises = [];
+    cb.querySelectorAll('.exercise-row').forEach(row => {
+      const n = row.querySelector('.ex-name').value.trim();
+      if (n) exercises.push({
+        name: n,
+        type: row.querySelector('.ex-type').value,
+        repsOrTime: row.querySelector('.ex-reps').value.trim(),
+        note: row.querySelector('.ex-note').value.trim(),
+      });
+    });
+    circuits.push({
+      name: cb.querySelector('.circuit-title-input').value.trim() || 'Circuit',
+      rounds: parseInt(cb.querySelector('.rounds-input').value) || 3,
+      restBetweenRounds: parseInt(cb.querySelector('.rest-input').value) || 30,
+      exercises,
+    });
+  });
+
+  const data = { name, circuits, updatedAt: serverTimestamp(), schemaVersion: SCHEMA_VERSION };
+  if (editingProgramId) {
+    await setDoc(doc(db, 'users', currentUser.uid, 'programs', editingProgramId), data, { merge: true });
+  } else {
+    await addDoc(collection(db, 'users', currentUser.uid, 'programs'), { ...data, createdAt: serverTimestamp() });
+  }
+  await loadPrograms();
+  renderProgramsList();
+  renderHome();
+  showToast('Program saved');
+  showPage('programs');
+};
+
+window.deleteProgram = async (id) => {
+  if (!confirm('Delete this program?')) return;
+  await deleteDoc(doc(db, 'users', currentUser.uid, 'programs', id));
+  await loadPrograms();
+  renderProgramsList();
+  renderHome();
+  showToast('Deleted');
+};
+
+// ── Session ───────────────────────────────────────────────
+window.startSession = (programId) => {
+  const prog = programs.find(p => p.id === programId);
+  if (!prog) return;
+
+  // Build step list
+  const steps = [];
+  prog.circuits.forEach((circuit, ci) => {
+    for (let round = 1; round <= circuit.rounds; round++) {
+      circuit.exercises.forEach(ex => {
+        steps.push({ type: 'exercise', circuit: circuit.name, circuitIndex: ci, round, rounds: circuit.rounds, exercise: ex });
+      });
+      if (round < circuit.rounds && circuit.restBetweenRounds > 0) {
+        steps.push({ type: 'rest', label: `Rest — ${circuit.name}`, duration: circuit.restBetweenRounds, round, rounds: circuit.rounds });
+      }
+    }
+  });
+
+  sessionState = {
+    programId, programName: prog.name,
+    steps, stepIndex: 0,
+    startTime: Date.now(),
+    timerRemaining: 0, timerTotal: 0, timerRunning: false,
+  };
+
+  document.getElementById('sess-program-name').textContent = prog.name;
+  document.getElementById('session-screen').classList.add('visible');
+  document.querySelector('.app').style.display = 'none';
+  document.getElementById('tab-bar').style.display = 'none';
+
+  renderStep();
+};
+
+function renderStep() {
+  if (!sessionState) return;
+  const { steps, stepIndex } = sessionState;
+  const total = steps.length;
+  const pct = total > 0 ? (stepIndex / total) * 100 : 0;
+  document.getElementById('sess-progress').style.width = pct + '%';
+  document.getElementById('sess-step-label').textContent = `Step ${stepIndex + 1} of ${total}`;
+
+  const step = steps[stepIndex];
+  const body = document.getElementById('session-body');
+
+  if (step.type === 'rest') {
+    renderRestStep(step, body);
+  } else {
+    renderExerciseStep(step, body);
+  }
+
+  renderUpcoming(body, steps, stepIndex);
+}
+
+function renderExerciseStep(step, body) {
+  const ex = step.exercise;
+  const isTimed = ex.type === 'time';
+  const secs = isTimed ? (parseInt(ex.repsOrTime) || 30) : 0;
+
+  body.innerHTML = `
+    <div class="phase-label">${step.circuit} · Round ${step.round} of ${step.rounds}</div>
+    <div class="exercise-name-big">${ex.name}</div>
+    <div class="exercise-detail">${ex.repsOrTime ? (isTimed ? ex.repsOrTime + ' seconds' : ex.repsOrTime) : ''}${ex.note ? '<br><span style="color:var(--text3);font-size:13px;">'+ex.note+'</span>' : ''}</div>
+    ${isTimed ? `
+      <div class="timer-ring-wrap">
+        <div class="timer-ring">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle class="timer-ring-track" cx="80" cy="80" r="70"/>
+            <circle class="timer-ring-fill" id="ring-fill" cx="80" cy="80" r="70"
+              stroke-dasharray="${2*Math.PI*70}" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-center">
+            <div class="timer-big" id="timer-big">${formatTime(secs)}</div>
+            <div class="timer-sub">remaining</div>
+          </div>
+        </div>
+      </div>
+      <div class="session-actions">
+        <button class="btn btn-primary btn-full btn-lg" id="timer-start-btn" onclick="toggleExTimer(${secs})">Start timer</button>
+        <button class="btn btn-full" onclick="nextStep()">Skip &amp; continue</button>
+      </div>
+    ` : `
+      <div class="session-actions">
+        <button class="btn btn-success btn-full btn-lg" onclick="nextStep()">Done — next exercise</button>
+      </div>
+    `}
+    <div class="upcoming-list" id="upcoming-list"></div>
+  `;
+}
+
+function renderRestStep(step, body) {
+  const secs = step.duration || 30;
+  body.innerHTML = `
+    <div class="phase-label">Rest</div>
+    <div class="exercise-name-big">${step.label}</div>
+    <div class="exercise-detail">Take a breath. Next round starts after the timer.</div>
+    <div class="timer-ring-wrap">
+      <div class="timer-ring">
+        <svg width="160" height="160" viewBox="0 0 160 160">
+          <circle class="timer-ring-track" cx="80" cy="80" r="70"/>
+          <circle class="timer-ring-fill" id="ring-fill" cx="80" cy="80" r="70"
+            stroke-dasharray="${2*Math.PI*70}" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-center">
+          <div class="timer-big" id="timer-big">${formatTime(secs)}</div>
+          <div class="timer-sub">rest</div>
+        </div>
+      </div>
+    </div>
+    <div class="session-actions">
+      <button class="btn btn-primary btn-full btn-lg" id="timer-start-btn" onclick="toggleExTimer(${secs})">Start rest timer</button>
+      <button class="btn btn-full" onclick="nextStep()">Skip rest</button>
+    </div>
+    <div class="upcoming-list" id="upcoming-list"></div>
+  `;
+}
+
+function renderUpcoming(body, steps, stepIndex) {
+  const upcoming = steps.slice(stepIndex + 1, stepIndex + 4);
+  if (upcoming.length === 0) return;
+  const ul = body.querySelector('#upcoming-list') || body.appendChild(document.createElement('div'));
+  if (!body.querySelector('#upcoming-list')) return;
+  body.querySelector('#upcoming-list').innerHTML = `
+    <div class="section-title" style="margin-bottom:10px;">Up next</div>
+    ${upcoming.map((s,i) => `
+      <div class="upcoming-item">
+        <div class="upcoming-num">${stepIndex+i+2}</div>
+        <div>${s.type==='rest' ? `Rest · ${s.duration}s` : `${s.exercise.name}${s.exercise.repsOrTime?' · '+s.exercise.repsOrTime:''}`}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+let exTimerInterval = null;
+window.toggleExTimer = (totalSecs) => {
+  if (exTimerInterval) {
+    clearInterval(exTimerInterval);
+    exTimerInterval = null;
+    const btn = document.getElementById('timer-start-btn');
+    if (btn) btn.textContent = 'Resume timer';
+    return;
+  }
+  const startRemaining = sessionState.timerRemaining > 0 ? sessionState.timerRemaining : totalSecs;
+  sessionState.timerRemaining = startRemaining;
+  sessionState.timerTotal = totalSecs;
+  const circumference = 2 * Math.PI * 70;
+  const btn = document.getElementById('timer-start-btn');
+  if (btn) btn.textContent = 'Pause timer';
+
+  exTimerInterval = setInterval(() => {
+    sessionState.timerRemaining--;
+    const rem = sessionState.timerRemaining;
+    const el = document.getElementById('timer-big');
+    const ring = document.getElementById('ring-fill');
+    if (el) el.textContent = formatTime(rem);
+    if (ring) {
+      const offset = circumference * (1 - rem / totalSecs);
+      ring.style.strokeDashoffset = offset;
+    }
+    if (rem <= 0) {
+      clearInterval(exTimerInterval);
+      exTimerInterval = null;
+      sessionState.timerRemaining = 0;
+      setTimeout(() => nextStep(), 500);
+    }
+  }, 1000);
+};
+
+window.nextStep = () => {
+  if (exTimerInterval) { clearInterval(exTimerInterval); exTimerInterval = null; }
+  sessionState.timerRemaining = 0;
+  sessionState.stepIndex++;
+  if (sessionState.stepIndex >= sessionState.steps.length) {
+    finishSession();
+  } else {
+    renderStep();
+  }
+};
+
+async function finishSession() {
+  const elapsed = Math.round((Date.now() - sessionState.startTime) / 1000);
+  const mins = Math.floor(elapsed / 60);
+  const duration = mins > 0 ? `${mins} min` : `${elapsed}s`;
+  await addDoc(collection(db, 'users', currentUser.uid, 'sessions'), {
+    programId: sessionState.programId,
+    programName: sessionState.programName,
+    duration,
+    completedAt: serverTimestamp(),
+    schemaVersion: SCHEMA_VERSION,
+  });
+
+  const body = document.getElementById('session-body');
+  document.getElementById('sess-progress').style.width = '100%';
+  body.innerHTML = `
+    <div class="complete-screen">
+      <div class="complete-icon">✓</div>
+      <h2>Session complete</h2>
+      <p>${sessionState.programName} · ${duration}</p>
+      <button class="btn btn-primary btn-lg btn-full" onclick="endSession(false)">Back to home</button>
+    </div>
+  `;
+}
+
+window.endSession = (confirm_) => {
+  if (confirm_ && !confirm('End this session early?')) return;
+  if (exTimerInterval) { clearInterval(exTimerInterval); exTimerInterval = null; }
+  sessionState = null;
+  document.getElementById('session-screen').classList.remove('visible');
+  document.querySelector('.app').style.display = 'block';
+  document.getElementById('tab-bar').style.display = 'flex';
+  loadAll();
+};
+
+// ── Navigation ────────────────────────────────────────────
+window.showTab = (tab) => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  showPage(tab === 'home' ? 'home' : tab === 'programs' ? 'programs' : 'history');
+  if (tab === 'history') renderHistory();
+  if (tab === 'home') renderHome();
+};
+
+window.showPage = (page) => {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page)?.classList.add('active');
+  document.getElementById('tab-bar').style.display = ['home','programs','history'].includes(page) ? 'flex' : 'none';
+};
+
+// ── Helpers ───────────────────────────────────────────────
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m > 0 ? `${m}:${String(sec).padStart(2,'0')}` : `${sec}`;
+}
+
+window.showToast = (msg) => {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+};
+
+</script>
+</body>
+</html>
