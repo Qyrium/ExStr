@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ExStr</title><!-- v0.2.2 -->
+<title>ExStr</title><!-- v0.2.3 -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -144,7 +144,7 @@ label{font-size:12px;font-weight:500;color:var(--tx2);display:block;margin-botto
   <div class="tnav">
     <div>
       <div class="brand">ExStr</div>
-      <div style="font-size:11px;color:var(--tx3)">v0.2.2</div>
+      <div style="font-size:11px;color:var(--tx3)">v0.2.3</div>
     </div>
     <div class="navr"><div class="ava" id="ava">?</div><button class="soB" onclick="doSignOut()">Sign out</button></div>
   </div>
@@ -282,7 +282,7 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-ap
 import{getAuth,GoogleAuthProvider,signInWithPopup,signOut as fbOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getFirestore,collection,doc,getDocs,setDoc,deleteDoc,addDoc,query,orderBy,limit,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const SV=1,AV="0.2.2";
+const SV=1,AV="0.2.3";
 const fbapp=initializeApp({apiKey:"AIzaSyC7PAIJSUv-wLq1JUu54rpsOrxUIDuVpP0",authDomain:"exstr-3d798.firebaseapp.com",projectId:"exstr-3d798",storageBucket:"exstr-3d798.firebasestorage.app",messagingSenderId:"530327654839",appId:"1:530327654839:web:5c3cfe32badf57727ad832"});
 const auth=getAuth(fbapp),db=getFirestore(fbapp),gp=new GoogleAuthProvider();
 
@@ -338,38 +338,39 @@ async function seed(){
 window.loadSample=async()=>{
   if(!user)return;
   toast("Loading…");
-  // Reload fresh data before checking for existing names
-  await load();
-  const ids={};
-  const sampleEx=[
-    {name:"Squat pull hold",type:"time",repsOrTime:"10",note:"Hold at the top"},
-    {name:"Squat pull",type:"reps",repsOrTime:"x8",note:""},
-    {name:"Split squat",type:"reps",repsOrTime:"x10 per side",note:"5–10kg, back knee soft touch on floor — weight depends on knee"},
-    {name:"Overhead press",type:"reps",repsOrTime:"x10",note:"7–8kg per side"},
-    {name:"KB B-stance single leg deadlift",type:"reps",repsOrTime:"x8 per side",note:"10–15kg"},
-    {name:"BW rows",type:"reps",repsOrTime:"x15",note:""},
-    {name:"Zottman / bicep / hammer curls",type:"reps",repsOrTime:"x10",note:"Pick weight with 1–2 reps left in tank. Start with 3kg."},
-  ];
-  for(const e of sampleEx){
-    const existing=exs.find(x=>x.name===e.name);
-    if(existing){ids[e.name]=existing.id;}
-    else{const r=await addDoc(collection(db,"users",user.uid,"exercises"),{...e,schemaVersion:SV,createdAt:serverTimestamp()});ids[e.name]=r.id;}
-  }
-  const cids={};
-  const sampleCi=[
-    {name:"Circuit 1",rounds:3,restBetweenRounds:30,exerciseIds:[ids["Squat pull hold"],ids["Squat pull"],ids["Split squat"]]},
-    {name:"Circuit 2",rounds:3,restBetweenRounds:30,exerciseIds:[ids["Overhead press"],ids["KB B-stance single leg deadlift"],ids["BW rows"]]},
-    {name:"Circuit 3",rounds:5,restBetweenRounds:0,exerciseIds:[ids["Zottman / bicep / hammer curls"]]},
-  ];
-  for(const c of sampleCi){
-    const existing=circs.find(x=>x.name===c.name);
-    if(existing){cids[c.name]=existing.id;}
-    else{const r=await addDoc(collection(db,"users",user.uid,"circuits"),{...c,schemaVersion:SV,createdAt:serverTimestamp()});cids[c.name]=r.id;}
-  }
-  if(!progs.find(p=>p.name==="Sample Program")){
-    await addDoc(collection(db,"users",user.uid,"programs"),{name:"Sample Program",circuitIds:[cids["Circuit 1"],cids["Circuit 2"],cids["Circuit 3"]],schemaVersion:SV,createdAt:serverTimestamp()});
-  }
-  await load();renderAll();toast("Sample program loaded");
+  try{
+    await load();
+    const ids={};
+    const sampleEx=[
+      {name:"Squat pull hold",type:"time",repsOrTime:"10",note:"Hold at the top"},
+      {name:"Squat pull",type:"reps",repsOrTime:"x8",note:""},
+      {name:"Split squat",type:"reps",repsOrTime:"x10 per side",note:"5–10kg, back knee soft touch on floor — weight depends on knee"},
+      {name:"Overhead press",type:"reps",repsOrTime:"x10",note:"7–8kg per side"},
+      {name:"KB B-stance single leg deadlift",type:"reps",repsOrTime:"x8 per side",note:"10–15kg"},
+      {name:"BW rows",type:"reps",repsOrTime:"x15",note:""},
+      {name:"Zottman / bicep / hammer curls",type:"reps",repsOrTime:"x10",note:"Pick weight with 1–2 reps left in tank. Start with 3kg."},
+    ];
+    for(const e of sampleEx){
+      const existing=exs.find(x=>x.name===e.name);
+      if(existing){ids[e.name]=existing.id;}
+      else{const r=await addDoc(collection(db,"users",user.uid,"exercises"),{...e,schemaVersion:SV,createdAt:serverTimestamp()});ids[e.name]=r.id;}
+    }
+    const cids={};
+    const sampleCi=[
+      {name:"Circuit 1",rounds:3,restBetweenRounds:30,exerciseIds:[ids["Squat pull hold"],ids["Squat pull"],ids["Split squat"]]},
+      {name:"Circuit 2",rounds:3,restBetweenRounds:30,exerciseIds:[ids["Overhead press"],ids["KB B-stance single leg deadlift"],ids["BW rows"]]},
+      {name:"Circuit 3",rounds:5,restBetweenRounds:0,exerciseIds:[ids["Zottman / bicep / hammer curls"]]},
+    ];
+    for(const c of sampleCi){
+      const existing=circs.find(x=>x.name===c.name);
+      if(existing){cids[c.name]=existing.id;}
+      else{const r=await addDoc(collection(db,"users",user.uid,"circuits"),{...c,schemaVersion:SV,createdAt:serverTimestamp()});cids[c.name]=r.id;}
+    }
+    if(!progs.find(p=>p.name==="Sample Program")){
+      await addDoc(collection(db,"users",user.uid,"programs"),{name:"Sample Program",circuitIds:[cids["Circuit 1"],cids["Circuit 2"],cids["Circuit 3"]],schemaVersion:SV,createdAt:serverTimestamp()});
+    }
+    await load();renderAll();toast("Sample program loaded");
+  }catch(e){toast("Failed: "+e.message);}
 };
 
 async function load(){
@@ -626,7 +627,7 @@ async function renderHistP(){
 }
 
 function fmt(s){const m=Math.floor(s/60),sc=s%60;return m>0?`${m}:${String(sc).padStart(2,"0")}`:String(sc);}
-function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),2500);}
+function toast(msg,dur=5000){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),dur);}
 window.showToast=toast;
 </script>
 
